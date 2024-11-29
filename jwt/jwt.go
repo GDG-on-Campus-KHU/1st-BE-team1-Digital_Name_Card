@@ -1,7 +1,10 @@
 package jwt
 
 import (
+	"crypto/rsa"
+	_ "embed"
 	"fmt"
+	"log"
 	"net/http"
 	"sideproject/models"
 	"strings"
@@ -17,13 +20,34 @@ var secretKey []byte
 //go:embed cert/public.pem
 var publicKey []byte
 
+var (
+	privKey *rsa.PrivateKey
+	pubKey  *rsa.PublicKey
+)
+
+func InitializeKeys() error {
+	sKey, err := jwt.ParseRSAPrivateKeyFromPEM(secretKey)
+	if err != nil {
+		return fmt.Errorf("failed to parse private key: %v", err)
+	}
+	privKey = sKey
+
+	pKey, err := jwt.ParseRSAPublicKeyFromPEM(publicKey)
+	if err != nil {
+		return fmt.Errorf("failed to parse public key: %v", err)
+	}
+	pubKey = pKey
+
+	return nil
+}
+
 type Claims struct {
 	Accounts []models.User `json:"accounts"`
 	jwt.RegisteredClaims
 }
 
 func GenerateToken(c *gin.Context) (string, error) {
-	if secretKey == nil {
+	if privKey == nil {
 		return "", fmt.Errorf("secret key not found")
 	}
 
@@ -42,11 +66,11 @@ func GenerateToken(c *gin.Context) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	return token.SignedString(secretKey)
+	return token.SignedString(privKey)
 }
 
 func ValidateToken(tokenString string) (*Claims, error) {
-	if publicKey == nil {
+	if pubKey == nil {
 		return nil, fmt.Errorf("public key not found")
 	}
 
@@ -55,7 +79,7 @@ func ValidateToken(tokenString string) (*Claims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return publicKey, nil
+		return pubKey, nil
 	})
 	if err != nil {
 		return nil, err
@@ -125,14 +149,16 @@ func SetAccount(c *gin.Context, user *models.User) (*gin.Context, error) {
 	//기존 context에 accounts가 있는지 확인
 	//있으면 기존 accounts에 새로운 account를 추가
 	//없으면 새로운 accounts를 생성해서 추가
-	accounts, err := GetAccount(c)
-	if err != nil {
+	accounts, exist := c.Get("accounts")
+	if !exist {
 		res := []models.User{*user}
 		c.Set("accounts", res)
-		return c, fmt.Errorf("failed to get accounts")
+		log.Printf("failed to get accounts")
+		return c, nil
 	}
 
-	res := append(accounts, *user)
+	app := accounts.([]models.User)
+	res := append(app, *user)
 	c.Set("accounts", res)
 	return c, nil
 }

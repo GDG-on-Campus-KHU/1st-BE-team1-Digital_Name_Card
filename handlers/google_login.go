@@ -76,14 +76,14 @@ func GoogleAuthCallback(c *gin.Context) {
 	}
 	c, err = jwt.SetAccount(c, &user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to set account"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to set account: err:" + err.Error()})
 		return
 	}
 
 	//context에 저장된 accounts를 가져와서 토큰을 생성
 	token, err := jwt.GenerateToken(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token: err " + err.Error()})
 		return
 	}
 
