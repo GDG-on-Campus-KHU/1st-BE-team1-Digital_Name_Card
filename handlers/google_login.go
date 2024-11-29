@@ -9,10 +9,9 @@ import (
 	"math/rand"
 	"net/http"
 	"sideproject/config"
+	"sideproject/jwt"
 	"sideproject/models"
 	"time"
-
-	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
 )
@@ -48,6 +47,7 @@ func GoogleLoginHandler(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
+// OAuth2.0 로그인 후 수행 로직
 func GoogleAuthCallback(c *gin.Context) {
 	oauthstate, _ := c.Request.Cookie("oauthstate")
 
@@ -57,6 +57,7 @@ func GoogleAuthCallback(c *gin.Context) {
 		return
 	}
 
+	//access코드 전달해서 google로 부터 유저 정보를 가져옴
 	data, err := GetGoogleUserInfo(c.Request.FormValue("code"))
 	if err != nil {
 		log.Println(err.Error())
@@ -66,14 +67,30 @@ func GoogleAuthCallback(c *gin.Context) {
 
 	log.Printf("User Info: %s\n", data)
 
+	//받아온 유저 정보를 context에 저장
+	//컨텍스트에 저장된 accounts가 있다면 해당 리스트에 추가
 	user := models.User{
-		Uid:      uuid.NewString(),
 		Email:    data["email"].(string),
 		Nickname: data["name"].(string),
+		Service:  "google",
+	}
+	c, err = jwt.SetAccount(c, &user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to set account"})
+		return
 	}
 
+	//context에 저장된 accounts를 가져와서 토큰을 생성
+	token, err := jwt.GenerateToken(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
+		return
+	}
+
+	c.SetCookie("token", token, 24*3600, "/", "", false, true)
+
 	c.JSON(http.StatusOK, gin.H{
-		"uid":      user.Uid,
+		"token":    token,
 		"email":    user.Email,
 		"nickname": user.Nickname,
 	})
@@ -96,7 +113,7 @@ func GetGoogleUserInfo(code string) (map[string]interface{}, error) {
 	var data map[string]interface{}
 	merr := json.NewDecoder(resp.Body).Decode(&data)
 	if merr != nil {
-		return nil, fmt.Errorf("Failed to decode JSON:", merr.Error())
+		return nil, fmt.Errorf("Failed to decode JSON:%v\n", merr.Error())
 	}
 
 	defer resp.Body.Close()

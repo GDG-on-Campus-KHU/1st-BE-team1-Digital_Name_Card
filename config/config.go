@@ -11,6 +11,12 @@ import (
 
 type Config struct {
 	GoogleLoginConfig oauth2.Config
+	KakaoLoginConfig  KakaoConfig
+}
+
+type KakaoConfig struct {
+	RestApiKey  string
+	RedirectURL string
 }
 
 var (
@@ -33,6 +39,20 @@ func GoogleConfig() oauth2.Config {
 	}
 
 	return googleLoginConfig
+}
+
+func KakaoConfigInit() KakaoConfig {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Some error occured. Err: %s", err)
+	}
+
+	kakaoLoginConfig := KakaoConfig{
+		RestApiKey:  os.Getenv("KAKAO_REST_API_KEY"),
+		RedirectURL: "http://localhost:5000/auth/kakao/callback",
+	}
+
+	return kakaoLoginConfig
 }
 
 func Init() {

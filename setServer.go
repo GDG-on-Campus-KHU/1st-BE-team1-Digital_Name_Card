@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sideproject/config"
 	login "sideproject/handlers"
+	"sideproject/handlers/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,6 +21,7 @@ func Setup() *gin.Engine {
 
 	r := gin.Default()
 
+	r.Use(middleware.AuthMiddleware())
 	r.GET("/", login.GoogleForm)
 	r.GET("/auth/google/login", login.GoogleLoginHandler)
 	r.GET("/auth/google/callback", login.GoogleAuthCallback)
