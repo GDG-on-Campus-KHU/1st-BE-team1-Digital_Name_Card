@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facebook OAuth Test</title>
+  <script async defer src="https://connect.facebook.net/en_US/sdk.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #4267B2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #365899;
+    }
+
+    .result {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Facebook OAuth Test</h1>
+  <button id="login-button">Login with Facebook</button>
+  <div class="result" id="result"></div>
+
+  <script>
+    // Facebook SDK 초기화
+    window.fbAsyncInit = function () {
+      FB.init({
+        appId: '600792579186889', // Facebook 앱 ID를 올바르게 입력
+        cookie: true,
+        xfbml: true,
+        version: 'v14.0'
+      });
+
+      console.log("Facebook SDK initialized");
+
+      // 로그인 버튼 클릭 이벤트 등록
+      document.getElementById('login-button').addEventListener('click', function () {
+        FB.login(function (response) {
+          if (response.authResponse) {
+            console.log('User logged in:', response.authResponse);
+            document.getElementById('result').innerText = "Login successful!";
+            // 유저 정보 가져오기
+            FB.api('/me', { fields: 'name,link' }, function (userInfo) {
+              console.log('User info:', userInfo);
+              document.getElementById('result').innerHTML = `
+                <p>Welcome, ${userInfo.name}</p>
+                <p>Profile Link: <a href="${userInfo.link}" target="_blank">Visit Facebook Profile</a></p>
+              `;
+            });
+          } else {
+            console.log('User cancelled login or did not fully authorize.');
+            document.getElementById('result').innerText = "Login failed!";
+          }
+        }, { scope: 'public_profile' }); // 추가 권한 요청 필요 없음 (link는 기본 제공)
+      });
+    };
+
+    // Facebook SDK 로드
+    (function (d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s);
+      js.id = id;
+      js.src = "https://connect.facebook.net/en_US/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+  </script>
+</body>
+
+</html>
