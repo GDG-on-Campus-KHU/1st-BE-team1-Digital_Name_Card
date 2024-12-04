@@ -25,6 +25,7 @@ var (
 	pubKey  *rsa.PublicKey
 )
 
+// RSA 키 초기화
 func InitializeKeys() error {
 	sKey, err := jwt.ParseRSAPrivateKeyFromPEM(secretKey)
 	if err != nil {
@@ -41,16 +42,19 @@ func InitializeKeys() error {
 	return nil
 }
 
+// JWT 토큰에 담을 정보
 type Claims struct {
 	Accounts []models.User `json:"accounts"`
 	jwt.RegisteredClaims
 }
 
+// JWT 토큰 생성
 func GenerateToken(c *gin.Context) (string, error) {
 	if privKey == nil {
 		return "", fmt.Errorf("secret key not found")
 	}
 
+	//context에서 accounts를 가져와서 JWT 토큰에 담기
 	accounts, err := GetAccount(c)
 	if err != nil {
 		return "", err
@@ -65,10 +69,12 @@ func GenerateToken(c *gin.Context) (string, error) {
 		},
 	}
 
+	//JWT 토큰 생성
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	return token.SignedString(privKey)
 }
 
+// JWT 토큰 검증
 func ValidateToken(tokenString string) (*Claims, error) {
 	if pubKey == nil {
 		return nil, fmt.Errorf("public key not found")
@@ -93,6 +99,7 @@ func ValidateToken(tokenString string) (*Claims, error) {
 	return nil, fmt.Errorf("invalid token")
 }
 
+// JWT 토큰을 context에 채워넣기
 func FillContext(c *gin.Context) (*gin.Context, error) {
 	//http request의 header에서 JWT 파싱
 	authHeader := c.GetHeader("Authorization")
@@ -125,6 +132,7 @@ func FillContext(c *gin.Context) (*gin.Context, error) {
 	return c, nil
 }
 
+// Context에서 accounts를 가져오기
 func GetAccount(c *gin.Context) ([]models.User, error) {
 	//context에서 accounts를 찾아서 반환
 	//accounts가 없으면 에러 반환
@@ -141,6 +149,7 @@ func GetAccount(c *gin.Context) ([]models.User, error) {
 	return users, nil
 }
 
+// Context에 accounts를 추가
 func SetAccount(c *gin.Context, user *models.User) (*gin.Context, error) {
 	if user == nil {
 		return c, fmt.Errorf("user is required")

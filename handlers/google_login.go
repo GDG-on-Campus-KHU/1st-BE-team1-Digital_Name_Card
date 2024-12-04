@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// 구글 로그인 페이지 링크 제공
 func GoogleForm(c *gin.Context) {
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(
 		"<html>"+
@@ -29,6 +30,7 @@ func GoogleForm(c *gin.Context) {
 			"</html>"))
 }
 
+// state 생성
 func GenerateStateOauthCookie(w http.ResponseWriter) string {
 	expiration := time.Now().Add(1 * 24 * time.Hour)
 
@@ -40,10 +42,13 @@ func GenerateStateOauthCookie(w http.ResponseWriter) string {
 	return state
 }
 
+// 구글 로그인 URL로 리디렉션
 func GoogleLoginHandler(c *gin.Context) {
 
+	//state 생성
 	state := GenerateStateOauthCookie(c.Writer)
 	url := config.AppConfig.GoogleLoginConfig.AuthCodeURL(state)
+	//구글 로그인 페이지로 리디렉션
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
@@ -51,6 +56,7 @@ func GoogleLoginHandler(c *gin.Context) {
 func GoogleAuthCallback(c *gin.Context) {
 	oauthstate, _ := c.Request.Cookie("oauthstate")
 
+	//state 검증
 	if c.Request.FormValue("state") != oauthstate.Value {
 		log.Printf("invalid google oauth state cookie:%s state:%s\n", oauthstate.Value, c.Request.FormValue("state"))
 		c.Redirect(http.StatusTemporaryRedirect, "/")
@@ -109,6 +115,7 @@ func GoogleAuthCallback(c *gin.Context) {
 		return
 	}
 
+	//로그인 성공시 부모창에 토큰을 전달하기 위한 html
 	html := fmt.Sprintf(`
         <html>
         <script>
@@ -124,9 +131,11 @@ func GoogleAuthCallback(c *gin.Context) {
         </html>
     `, string(userDataJSON))
 
+	//로그인 성공시 부모창에 토큰을 전달
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(html))
 }
 
+// 구글로 부터 유저 정보 가져오기
 func GetGoogleUserInfo(code string) (map[string]interface{}, error) {
 	const oauthGoogleUrlAPI = "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
 	token, err := config.AppConfig.GoogleLoginConfig.Exchange(context.Background(), code)
