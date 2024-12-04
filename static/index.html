@@ -1,87 +1,160 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Facebook OAuth Test</title>
-  <script async defer src="https://connect.facebook.net/en_US/sdk.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 50px;
-    }
-
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #4267B2;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #365899;
-    }
-
-    .result {
-      margin-top: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .login-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .login-button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+        .facebook-login {
+            background-color: #3b5998;
+        }
+        .google-login {
+            background-color: #db4437;
+        }
+        .profile-container {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
-
 <body>
-  <h1>Facebook OAuth Test</h1>
-  <button id="login-button">Login with Facebook</button>
-  <div class="result" id="result"></div>
+    <h1>OAuth 테스트</h1>
+    <div class="login-container">
+        <button id="facebook-login-button" class="login-button facebook-login">Facebook 로그인</button>
+        <button id="google-login-button" class="login-button google-login">Google 로그인</button>
+    </div>
+    <div id="profile-container" class="profile-container hidden">
+        <h2>Google 프로필</h2>
+        <div class="result" id="google-result">
+            <p><strong>이메일: </strong><span id="userEmail"></span></p>
+            <p><strong>이름: </strong><span id="userName"></span></p>
+            <!--<p><strong>토큰: </strong><span id="userToken"></span></p>-->
+        </div>
+        <h2>Facebook 프로필</h2>
+        <div class="result" id="facebook-result"></div>
+    </div>
 
-  <script>
-    // Facebook SDK 초기화
-    window.fbAsyncInit = function () {
-      FB.init({
-        appId: '600792579186889', // Facebook 앱 ID를 올바르게 입력
-        cookie: true,
-        xfbml: true,
-        version: 'v14.0'
-      });
 
-      console.log("Facebook SDK initialized");
+    <script>
+      // Facebook SDK 초기화
+      window.fbAsyncInit = function () {
+        FB.init({
+          appId: '600792579186889', // Facebook 앱 ID를 올바르게 입력
+          cookie: true,
+          xfbml: true,
+          version: 'v14.0'
+        });
 
-      // 로그인 버튼 클릭 이벤트 등록
-      document.getElementById('login-button').addEventListener('click', function () {
-        FB.login(function (response) {
-          if (response.authResponse) {
-            console.log('User logged in:', response.authResponse);
-            document.getElementById('result').innerText = "Login successful!";
-            // 유저 정보 가져오기
-            FB.api('/me', { fields: 'name,link' }, function (userInfo) {
-              console.log('User info:', userInfo);
-              document.getElementById('result').innerHTML = `
-                <p>Welcome, ${userInfo.name}</p>
-                <p>Profile Link: <a href="${userInfo.link}" target="_blank">Visit Facebook Profile</a></p>
-              `;
-            });
-          } else {
-            console.log('User cancelled login or did not fully authorize.');
-            document.getElementById('result').innerText = "Login failed!";
-          }
-        }, { scope: 'public_profile' }); // 추가 권한 요청 필요 없음 (link는 기본 제공)
-      });
-    };
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'googleLogin') {
+                const { email, nickname, token } = event.data;
+                displayGoogleProfile(email, nickname, token);
+            }
+        });
 
-    // Facebook SDK 로드
-    (function (d, s, id) {
-      var js, fjs = d.getElementsByTagName(s)[0];
-      if (d.getElementById(id)) return;
-      js = d.createElement(s);
-      js.id = id;
-      js.src = "https://connect.facebook.net/en_US/sdk.js";
-      fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'facebook-jssdk'));
-  </script>
+        console.log("Facebook SDK initialized");
+
+        // 로그인 버튼 클릭 이벤트 등록
+        document.getElementById('facebook-login-button').addEventListener('click', function () {
+          FB.login(function (response) {
+            if (response.authResponse) {
+              console.log('User logged in:', response.authResponse);
+              document.getElementById('facebook-result').innerText = "Login successful!";
+              // 유저 정보 가져오기
+              FB.api('/me', { fields: 'name,link' }, function (userInfo) {
+                console.log('User info:', userInfo);
+                document.getElementById('facebook-result').innerHTML = `
+                  <p><strong>Welcome, ${userInfo.name}</strong></p>
+                  <p><strong>프로필 링크:</strong><a href="${userInfo.link}" target="_blank">Facebook 프로필 방문</a></p>  
+                `;
+              });
+            } else {
+              console.log('User cancelled login or did not fully authorize.');
+              document.getElementById('facebook-result').innerText = "Login failed!";
+            }
+          }, { scope: 'public_profile' }); // 추가 권한 요청 필요 없음 (link는 기본 제공)
+        });
+      };
+
+      // Facebook SDK 로드
+      (function (d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s);
+        js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+
+    
+
+      function displayGoogleProfile(email, nickname, token) {
+            document.getElementById('userEmail').textContent = email;
+            document.getElementById('userName').textContent = nickname;
+            //document.getElementById('userToken').textContent = token;
+            document.getElementById('profile-container').classList.remove('hidden');
+        }
+
+        // 페이지 로드 시 기존 토큰 확인
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = document.cookie.split('; ').find(row => row.startsWith('token='));
+            if (token) {
+                // 토큰이 있다면 백엔드에서 사용자 정보 가져오기
+                fetch('/user/info', {
+                    headers: {
+                        'Authorization': `Bearer ${token.split('=')[1]}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    displayGoogleProfile(data.email, data.nickname, token.split('=')[1]);
+                })
+                .catch(error => console.error('사용자 정보 가져오기 실패:', error));
+            }
+        });
+
+        // Google 로그인 팝업 처리
+        document.getElementById('google-login-button').addEventListener('click', function() {
+            const width = 500;
+            const height = 600;
+            const left = (window.innerWidth - width) / 2;
+            const top = (window.innerHeight - height) / 2;
+            
+            window.open('/auth/google/login', 
+                       'google-login', 
+                       `width=${width}, height=${height}, top=${top}, left=${left}`);
+        });
+
+    </script>
 </body>
 
 </html>

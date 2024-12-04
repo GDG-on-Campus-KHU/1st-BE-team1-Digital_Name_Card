@@ -89,13 +89,42 @@ func GoogleAuthCallback(c *gin.Context) {
 
 	c.SetCookie("token", token, 24*3600, "/", "", false, true)
 
-	c.JSON(http.StatusOK, gin.H{
-		"token":    token,
+	/*
+		c.JSON(http.StatusOK, gin.H{
+			"token":    token,
+			"email":    user.Email,
+			"nickname": user.Nickname,
+		})
+	*/
+
+	userData := map[string]string{
 		"email":    user.Email,
 		"nickname": user.Nickname,
-	})
+		"token":    token,
+	}
 
-	c.Redirect(http.StatusFound, "/profile")
+	userDataJSON, err := json.Marshal(userData)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "JSON 인코딩 실패"})
+		return
+	}
+
+	html := fmt.Sprintf(`
+        <html>
+        <script>
+            const userData = %s;
+            window.opener.postMessage({
+                type: 'googleLogin',
+                email: userData.email,
+                nickname: userData.nickname,
+                token: userData.token
+            }, '*');
+            window.close();
+        </script>
+        </html>
+    `, string(userDataJSON))
+
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(html))
 }
 
 func GetGoogleUserInfo(code string) (map[string]interface{}, error) {

@@ -11,7 +11,6 @@ import (
 
 type Config struct {
 	GoogleLoginConfig oauth2.Config
-	KakaoLoginConfig  KakaoConfig
 }
 
 type KakaoConfig struct {
@@ -30,7 +29,7 @@ func GoogleConfig() oauth2.Config {
 	}
 
 	googleLoginConfig := oauth2.Config{
-		RedirectURL:  "http://localhost:5000/auth/google/callback",
+		RedirectURL:  "http://localhost:8080/auth/google/callback",
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 		Scopes: []string{"https://www.googleapis.com/auth/userinfo.email",
@@ -39,20 +38,6 @@ func GoogleConfig() oauth2.Config {
 	}
 
 	return googleLoginConfig
-}
-
-func KakaoConfigInit() KakaoConfig {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("Some error occured. Err: %s", err)
-	}
-
-	kakaoLoginConfig := KakaoConfig{
-		RestApiKey:  os.Getenv("KAKAO_REST_API_KEY"),
-		RedirectURL: "http://localhost:5000/auth/kakao/callback",
-	}
-
-	return kakaoLoginConfig
 }
 
 func Init() {
