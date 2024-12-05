@@ -5,7 +5,14 @@ OAuth2.0을 이용하여 SNS 및 EMail 서비스에 로그인하고 정보를 �
 
 자신의 다양한 소셜 계정을 하나의 페이지에서 표현할 수 있다.   
 ### 실행화면 예시
-<img src="https://github.com/SeoPPak/GDGoC-BE_SP1/blob/master/example.png"  width="450" height="300"/>
+<img src="https://github.com/GDG-on-Campus-KHU/1st-BE-team1-Digital_Name_Card/blob/master/example.png"  width="450" height="300"/>
+
+## Project Architecture
+### Architecture 개요
+![프로젝트 구조](https://github.com/GDG-on-Campus-KHU/1st-BE-team1-Digital_Name_Card/blob/master/projectArchitecture.png)
+
+### Flow Chart
+<img src="https://github.com/GDG-on-Campus-KHU/1st-BE-team1-Digital_Name_Card/blob/master/SideProject%20Flow%20Chart.png" width="400" height="700"/>
 
 ## Requirement
 - `go 1.X.X` or higher
@@ -18,7 +25,7 @@ OAuth2.0을 이용하여 SNS 및 EMail 서비스에 로그인하고 정보를 �
     ```
 3. move to working directory
     ```
-    cd GDGoC-BE_SP1
+    cd 1st-BE-team1-Digital_Name_Card
     ```
 4. install dependencies
     ```
